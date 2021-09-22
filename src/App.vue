@@ -1,28 +1,64 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
-  </div>
+    <div class="container">
+      <header>
+        <div class="logo text-center mt-5">
+          <h3>Mortgage Calculator</h3>
+          <img src="../public/img/House.png" alt="house-picture" class="mt-3">
+        </div>
+
+        <div class="menu">
+          <nav class="navbar navbar-light bg-light mt-3">
+              <ul class="navbar-nav flex-row">
+                <button class="btn btn-success" type="button" @click="!isBanksComponentOpened ? $router.push({ path: 'banks-management' }) : null">Banks management</button>
+                <button class="btn btn-danger" type="button" @click="!isCalculatorComponentOpened ? $router.push({ path: 'mortgage-calculator' }) : null">Mortgage calculator</button>
+              </ul>
+          </nav>
+        </div>
+      </header>
+    </div><!-- /.container -->
+
+    <div class="mt-4">
+      <banksManagementComponent v-if="isBanksComponentOpened && !isCalculatorComponentOpened"/>
+      <mortgageCalculatorComponent v-if="isCalculatorComponentOpened && !isBanksComponentOpened"/>
+    </div>
+  </div><!-- /#app -->
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import banksManagementComponent from '@/components/BanksManagement'
+import mortgageCalculatorComponent from '@/components/MortgageCalculator'
 
 export default {
   name: 'App',
   components: {
-    HelloWorld
+    banksManagementComponent,
+    mortgageCalculatorComponent
+  },
+  computed: {
+    isBanksComponentOpened () {
+      return this.$route.name === 'banks-management'
+    },
+    isCalculatorComponentOpened () {
+      return this.$route.name === 'mortgage-calculator'
+    }
+  },
+  created()
+  {
+    this.$route.name !== 'banks-management' && this.$route.name !== 'mortgage-calculator'
+      ? this.$router.push({ path: 'banks-management' }) : null
   }
 }
 </script>
 
-<style>
+<style scoped>
+
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+  padding-bottom: 200px;
 }
+
+nav .btn:first-child {
+  margin-right: 1em !important;
+}
+
 </style>
