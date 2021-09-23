@@ -54,8 +54,6 @@
 </template>
 
 <script>
-import firebase from 'firebase/compat/app'
-import 'firebase/compat/database'
 import { required, maxValue, minValue } from 'vuelidate/lib/validators'
 
 export default {
@@ -99,26 +97,14 @@ export default {
       this.result = M.toFixed(2)
     },
     async loadBanks () {
-      this.banks = []
-      const bank = await firebase.database().ref('banks').once('value').catch(e => console.log(e))
-      const banks = bank.val()
-      Object.keys(banks).forEach(key => {
-        const b = banks[key]
-        this.banks.push(
-          {
-            title: b.title,
-            interestRate: b.interestRate,
-            maximumLoan: b.maximumLoan,
-            minimumDownPayment: b.minimumDownPayment,
-            loanTerm: b.loanTerm,
-            id: key
-          }
-        )
-      })
-      this.banks.reverse()
+      await this.$http.get(this.$api + '/bank').then((response) => {
+        this.banks = response.data.data
+      }).catch((e) => { throw e })
     },
-    setCurrentBank(id) {
-      this.currentBank = this.banks.find(b => b.id === id)
+    async setCurrentBank(id) {
+      await this.$http.get(this.$api + '/bank/' + id).then((response) => {
+        this.currentBank = response.data.data
+      }).catch((e) => { throw e })
     }
   },
   async created() {

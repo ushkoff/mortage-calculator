@@ -100,8 +100,6 @@
 </template>
 
 <script>
-import firebase from 'firebase/compat/app'
-import 'firebase/compat/database'
 import { required } from 'vuelidate/lib/validators'
 
 export default {
@@ -125,26 +123,58 @@ export default {
   },
   methods: {
     async loadBanks () {
-      this.banks = []
-      const bank = await firebase.database().ref('banks').once('value').catch(e => console.log(e))
-      const banks = bank.val()
-      Object.keys(banks).forEach(key => {
-        const b = banks[key]
-        this.banks.push(
-          {
-            title: b.title,
-            interestRate: b.interestRate,
-            maximumLoan: b.maximumLoan,
-            minimumDownPayment: b.minimumDownPayment,
-            loanTerm: b.loanTerm,
-            id: key
-          }
-        )
-      })
-      // desc output
-      this.banks.reverse()
+      await this.$http.get(this.$api + '/bank').then((response) => {
+        this.banks = response.data.data
+      }).catch((e) => { throw e })
     },
     async createBank() {
+      // Validation
+      if (this.$v.$invalid) {
+        this.$v.$touch()
+        return false
+      }
+      
+      const newBank = {
+        title: this.name,
+        interest_rate: this.rate,
+        max_loan: this.loan,
+        min_down_payment: this.payment,
+        loan_term: this.term
+      }
+
+      await this.$http.post(this.$api + '/bank/store', newBank).then(() => {
+        console.log('Bank successfully saved in ' + process.env.VUE_APP_TITLE + ' website storage')
+        alert('Bank has been successfully added!')
+      }).catch((e) => {
+        console.log(e)
+        alert('Error: ' + e)
+      })
+
+      this.resetFormData()
+    },
+    async deleteBank(id) {
+      await this.$http.post(this.$api + '/bank/' + id + '/delete').then(() => {
+        console.log('Bank successfully deleted.')
+        alert('Bank has been deleted successfully!')
+      }).catch((e) => {
+        console.log(e)
+        alert('Error: ' + e)
+      })
+
+      this.loadBanks()
+    },
+    async startEditBank(id) {
+      await this.$http.get(this.$api + '/bank/' + id).then((response) => {
+        this.currentBank = response.data.data
+        this.isEdit = true
+        this.name = this.currentBank.title
+        this.rate = this.currentBank.interestRate
+        this.loan = this.currentBank.maximumLoan
+        this.payment = this.currentBank.minimumDownPayment
+        this.term = this.currentBank.loanTerm
+      }).catch((e) => { throw e })
+    },
+    async editBank(id) {
       // Validation
       if (this.$v.$invalid) {
         this.$v.$touch()
@@ -153,60 +183,20 @@ export default {
 
       const newBank = {
         title: this.name,
-        interestRate: this.rate,
-        maximumLoan: this.loan,
-        minimumDownPayment: this.payment,
-        loanTerm: this.term
+        interest_rate: this.rate,
+        max_loan: this.loan,
+        min_down_payment: this.payment,
+        loan_term: this.term
       }
 
-      try {
-        await firebase.database().ref('banks').push(newBank)
-        alert('Bank has been successfully added!')
-      }
-      catch(e) {
-        console.log(e)
-        alert('Error: ' + e)
-      }
-
-      this.resetFormData()
-    },
-    async deleteBank(id) {
-      try {
-        await firebase.database().ref('banks').child(id).remove()
-        alert('Bank has been deleted successfully!')
-        this.loadBanks()
-      } catch (e) {
-        console.log(e)
-      }
-    },
-    startEditBank(id) {
-      this.currentBank = this.banks.find(b => b.id === id)
-      this.isEdit = true
-      this.name = this.currentBank.title
-      this.rate = this.currentBank.interestRate
-      this.loan = this.currentBank.maximumLoan
-      this.payment = this.currentBank.minimumDownPayment
-      this.term = this.currentBank.loanTerm
-    },
-    async editBank(id) {
-      // Validation
-      if (this.$v.$invalid) {
-        this.$v.$touch()
-        return false
-      }
-      try {
-        await firebase.database().ref('banks').child(id).update({
-          title: this.name,
-          interestRate: this.rate,
-          maximumLoan: this.loan,
-          minimumDownPayment: this.payment,
-          loanTerm: this.term
-        })
+      await this.$http.post(this.$api + '/bank/' + id + '/update', newBank).then(() => {
+        console.log('Bank successfully updated in ' + process.env.VUE_APP_TITLE + ' website storage')
         alert('Bank has been successfully edited!')
         this.$nextTick(() => { this.$v.$reset() })
-      } catch (e) {
+      }).catch((e) => {
         console.log(e)
-      }
+        alert('Error: ' + e)
+      })
 
       this.resetFormData()
       this.isEdit = false
