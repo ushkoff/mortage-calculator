@@ -123,8 +123,8 @@ export default {
   },
   methods: {
     async loadBanks () {
-      await this.$http.get(this.$api + '/bank').then((response) => {
-        this.banks = response.data.data
+      await fetch(this.$api + '/bank').then(r=>r.json()).then((response) => {
+        this.banks = response.data
       }).catch((e) => { throw e })
     },
     async createBank() {
@@ -134,7 +134,7 @@ export default {
         return false
       }
       
-      const newBank = {
+      const b = {
         title: this.name,
         interest_rate: this.rate,
         max_loan: this.loan,
@@ -142,18 +142,48 @@ export default {
         loan_term: this.term
       }
 
-      await this.$http.post(this.$api + '/bank/store', newBank).then(() => {
-        console.log('Bank successfully saved in ' + process.env.VUE_APP_TITLE + ' website storage')
-        alert('Bank has been successfully added!')
-      }).catch((e) => {
-        console.log(e)
-        alert('Error: ' + e)
-      })
+      /**
+       * Fixing error ERR_HTTP2_PROTOCOL_ERROR
+       * (000webhost backend hosting)
+       * 
+       * In order for http2 to work for the client's post request,
+       * it is necessary to rewrite the request via XMLHttpRequest
+       */
+
+      // await fetch(this.$api + '/bank/store', {
+      //   method: 'post',
+      //   body: JSON.stringify(newBank),
+      //   headers: {
+      //     'Access-Control-Allow-Origin': '*'
+      //   }
+      // }).then(() => {
+      //   console.log('Bank successfully saved in ' + process.env.VUE_APP_TITLE + ' website storage')
+      //   alert('Bank has been successfully added!')
+      // }).catch((e) => {
+      //   console.log(e)
+      //   alert('Error: ' + e)
+      // })
+
+      var http = new XMLHttpRequest()
+      var params = 'title=' + b.title + '&interest_rate=' + b.interest_rate+ '&max_loan=' + b.max_loan 
+        +'&min_down_payment=' + b.min_down_payment + '&loan_term=' + b.loan_term
+      http.open('POST', this.$api + '/bank/store', true)
+
+      http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded')
+
+      http.onreadystatechange = function() {
+          if(http.readyState == 4 && http.status == 200) {
+            console.log('Bank successfully saved in ' + process.env.VUE_APP_TITLE + ' website storage')
+            alert('Bank has been successfully added!')
+          }
+      }
+      http.send(params)
 
       this.resetFormData()
+      this.loadBanks()
     },
     async deleteBank(id) {
-      await this.$http.post(this.$api + '/bank/' + id + '/delete').then(() => {
+      await fetch(this.$api + '/bank/' + id + '/delete' , { method: 'post' }).then(() => {
         console.log('Bank successfully deleted.')
         alert('Bank has been deleted successfully!')
       }).catch((e) => {
@@ -164,9 +194,9 @@ export default {
       this.loadBanks()
     },
     async startEditBank(id) {
-      await this.$http.get(this.$api + '/bank/' + id).then((response) => {
-        this.currentBank = response.data.data
-        this.isEdit = true
+      await fetch(this.$api + '/bank/' + id).then(r=>r.json()).then((response) => {
+       this.currentBank = response.data
+       this.isEdit = true
         this.name = this.currentBank.title
         this.rate = this.currentBank.interestRate
         this.loan = this.currentBank.maximumLoan
@@ -181,7 +211,7 @@ export default {
         return false
       }
 
-      const newBank = {
+      const b = {
         title: this.name,
         interest_rate: this.rate,
         max_loan: this.loan,
@@ -189,16 +219,43 @@ export default {
         loan_term: this.term
       }
 
-      await this.$http.post(this.$api + '/bank/' + id + '/update', newBank).then(() => {
-        console.log('Bank successfully updated in ' + process.env.VUE_APP_TITLE + ' website storage')
-        alert('Bank has been successfully edited!')
-        this.$nextTick(() => { this.$v.$reset() })
-      }).catch((e) => {
-        console.log(e)
-        alert('Error: ' + e)
-      })
+      /**
+       * Fixing error ERR_HTTP2_PROTOCOL_ERROR
+       * (000webhost backend hosting)
+       * 
+       * In order for http2 to work for the client's post request,
+       * it is necessary to rewrite the request via XMLHttpRequest
+       */
+
+      // await fetch(this.$api + '/bank/' + id + '/update', {
+      //   method: 'post',
+      //   body: JSON.stringify(newBank),
+      //   headers: { 'Access-Control-Allow-Origin': '*' }
+      // }).then(() => {
+      //   console.log('Bank successfully updated in ' + process.env.VUE_APP_TITLE + ' website storage')
+      //   alert('Bank has been successfully edited!')
+      // }).catch((e) => {
+      //   console.log(e)
+      //   alert('Error: ' + e)
+      // })
+
+      var http = new XMLHttpRequest()
+      var params = 'title=' + b.title + '&interest_rate=' + b.interest_rate+ '&max_loan=' + b.max_loan 
+        +'&min_down_payment=' + b.min_down_payment + '&loan_term=' + b.loan_term
+      http.open('POST', this.$api + '/bank/' + id + '/update', true)
+
+      http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded')
+
+      http.onreadystatechange = function() {
+          if(http.readyState == 4 && http.status == 200) {
+            console.log('Bank successfully updated in ' + process.env.VUE_APP_TITLE + ' website storage')
+            alert('Bank has been successfully edited!')
+          }
+      }
+      http.send(params)
 
       this.resetFormData()
+      this.loadBanks()
       this.isEdit = false
       this.currentBank = null
     },

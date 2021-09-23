@@ -97,13 +97,13 @@ export default {
       this.result = M.toFixed(2)
     },
     async loadBanks () {
-      await this.$http.get(this.$api + '/bank').then((response) => {
-        this.banks = response.data.data
+      await fetch(this.$api + '/bank').then(r=>r.json()).then((response) => {
+        this.banks = response.data
       }).catch((e) => { throw e })
     },
     async setCurrentBank(id) {
-      await this.$http.get(this.$api + '/bank/' + id).then((response) => {
-        this.currentBank = response.data.data
+      await fetch(this.$api + '/bank/' + id).then(r=>r.json()).then((response) => {
+       this.currentBank = response.data
       }).catch((e) => { throw e })
     }
   },
